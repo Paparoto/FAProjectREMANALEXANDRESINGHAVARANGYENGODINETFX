@@ -2,6 +2,7 @@ from Classes import *
 
 import re
 import string
+import time
 
 
 def read_automaton():
@@ -74,6 +75,7 @@ def read_automaton():
 def is_not_standard_fa(auto):
     # Condition 1: Check for exactly one initial state
     if len(auto.initial_states) != 1:
+        print("More or less than 1 intial state ! Not Standard.")
         return True # Non-standard: 0 or multiple initial states 
     
     unique_entry = auto.initial_states[0]
@@ -85,6 +87,7 @@ def is_not_standard_fa(auto):
             destinations = auto.transitions[state][symbol]
             # If the unique_entry is found in any set of destination states, it's non-standard
             if unique_entry in destinations:
+                print("1 initial state, but destination to 1 or more transitions ! Not Standard.")
                 return True # Non-standard: transition arrives at the unique entry 
 
     # If both conditions are met, it is a standard automaton
@@ -130,7 +133,7 @@ def display_automaton(auto):
     print(f"Number of states : {auto.num_states}")
     print(f"Initial states : {auto.initial_states}")
     print(f"Final States : {auto.final_states}")
-    print("Transitions :")
+    print(f"Transitions : {auto.transitions}")
     for state in auto.transitions:
         for symbol, target_state in auto.transitions[state].items():
             for target in target_state:
@@ -138,12 +141,12 @@ def display_automaton(auto):
     print(f"Is this a standard FA? : {'No' if is_not_standard_fa(auto) else 'Yes'}") 
 
 
-
-my_fa = read_automaton()
-display_automaton(my_fa)
-if is_not_standard_fa(my_fa):
+fa = read_automaton()
+display_automaton(fa)
+time.sleep(0.5)
+if is_not_standard_fa(fa):
     rep = input("This automaton is not a standard FA. Do you want to convert it to a standard FA? (y/n) : ").strip().lower()
     if rep == 'y':
-        standardize_automaton(my_fa)
-        display_automaton(my_fa)
-
+        standardize_automaton(fa)
+        time.sleep(0.25)
+        display_automaton(fa)
