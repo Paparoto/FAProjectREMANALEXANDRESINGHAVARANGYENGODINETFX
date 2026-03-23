@@ -214,27 +214,18 @@ def determinization_and_completion_of_automaton(auto):
     cdfa.num_states = len(all_sets)
     return cdfa
 
-def display_complete_deterministic_automaton(cdfa):
-    """Displays the CDFA using the state IDs as the composition representation."""
-    print("\n--- Complete Deterministic Automaton (CDFA) ---")
-    
-    # We iterate through the states found in the transitions
-    for state_id in sorted(cdfa.transitions.keys()):
-        # Handle the Puits (999) display
-        label = "Puits" if state_id == 999 else str(state_id)
-        
-        is_init = "-> " if state_id in cdfa.initial_states else "   "
-        is_final = " (Final)" if state_id in cdfa.final_states else ""
-        
-        print(f"{is_init}State {label}{is_final}")
-        
-        for symbol in sorted(cdfa.transitions[state_id].keys()):
-            # Get the destination (it's a set, so we pop the single value)
-            dest_id = list(cdfa.transitions[state_id][symbol])[0]
-            dest_label = "Puits" if dest_id == 999 else str(dest_id)
-            
-            print(f"      |-- {symbol} --> {dest_label}")
-    print("-" * 45)
+def display_complete_deterministic_automaton(auto):
+    """Displays the CDFA and explicitly shows state composition using the required format."""
+    print(f"Alphabet size : {auto.alphabet_size}")
+    print(f"Alphabet : {auto.alphabet}")
+    print(f"Number of states : {auto.num_states}")
+    print(f"Initial state : {auto.initial_states}")
+    print(f"Final States : {auto.final_states}")
+    for state in auto.transitions:
+        for symbol, target_state in auto.transitions[state].items():
+            for target in target_state:
+                # 'state' and 'target' will be strings like "1.2" or "Puits"
+                print(f"{state} -{symbol}-> {target}")
 
 fa = read_automaton()
 display_automaton(fa)
