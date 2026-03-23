@@ -70,7 +70,57 @@ def read_automaton():
     print(f"Successfully loaded Automaton {target_id}!")
     return auto
 
+def is_not_standard_fa(auto):
+    # Check for 0 or multiple initial states
+    if len(auto.initial_states) != 1:
+        return True
+    
+    # Check for 0 or multiple transitions per symbols
+    for state in auto.transitions:
+        for symbol in auto.transitions[state]:
+            if len(auto.transitions[state][symbol]) != 1:
+                return True
+
+    # We look for any symbol that isn't in our formal alphabet (usually represented as 'ε', '#', or '')
+    for state in auto.transitions:
+        for symbol in auto.transitions[state]:
+            if symbol not in auto.alphabet:
+                return True
+
+    # Check for 0 or multiple transitions for each symbol in the alphabet for each state
+    for state_id in range(auto.num_states):
+        if state_id not in auto.transitions:
+            return True # Non-standard (Incomplete)
+    
+        # Get the symbols this specific state currently handles
+        symbols_defined = auto.transitions[state_id].keys()
+    
+        # Check if every letter of the alphabet exists as a key for this state
+        for char in auto.alphabet:
+            if char not in symbols_defined:
+                return True # Non-standard (Missing a transition for this character)
+            
+    return False
+
+def standardize_automaton(auto):
+    pass
+
+def display_automaton(auto):
+    print(f"Alphabet size : {auto.alphabet_size}")
+    print(f"Alphabet : {auto.alphabet}")
+    print(f"Number of states : {auto.num_states}")
+    print(f"Initial states : {auto.initial_states}")
+    print(f"Final States : {auto.final_states}")
+    print(f"Transitions : {auto.transitions}")
+    print(f"Is this a standard FA? : {'No' if is_not_standard_fa(auto) else 'Yes'}") 
+
 
 
 my_fa = read_automaton()
-print(f"Alphabet size : {my_fa.alphabet_size}\nAlphabet : {my_fa.alphabet}\nNumber of states : {my_fa.num_states}\nInitial states : {my_fa.initial_states}\nFinal States : {my_fa.final_states}\nTransitions : {my_fa.transitions}")
+display_automaton(my_fa)
+if is_not_standard_fa(my_fa):
+    rep = input("This automaton is not a standard FA. Do you want to convert it to a standard FA? (y/n) : ").strip().lower()
+    if rep == 'y':
+        standardize_automaton(my_fa)
+        display_automaton(my_fa)
+
