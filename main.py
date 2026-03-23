@@ -1,12 +1,10 @@
 from Classes import *
-
 import re
 import string
 import time
 
-
 def read_automaton():
-    # 1. Get the user input and format it to match the file (e.g., "03" -> "#03")
+    """Reads automaton data from a file based on user ID selection and maps it to the class."""
     choice = input("Which FA do you want to use? from (01 to 44) : ").strip()
     target_id = f"#{choice}"
 
@@ -17,18 +15,15 @@ def read_automaton():
     with open("Automatas.txt", "r") as file:
         for line in file:
             line = line.strip()
-            if not line: continue  # Skip empty lines
+            if not line: continue 
 
-            # Check for the start of our target section
             if line == target_id:
                 found = True
                 continue
 
-            # If we hit the NEXT # section, stop reading
             if found and line.startswith("#"):
                 break
 
-            # If we are inside the correct section, collect the line
             if found:
                 data_lines.append(line)
 
@@ -36,32 +31,21 @@ def read_automaton():
         print(f"Error: Automaton {target_id} not found in file.")
         return None
 
-    # 2. Map the collected data to the Automaton class
-    # Line 0: Alphabet Size
     auto.alphabet_size = int(data_lines[0])
-    # Generate alphabet letters (a, b, c...) based on size
-    
     auto.alphabet = list(string.ascii_lowercase[:auto.alphabet_size])
-
-    # Line 1: Number of States
     auto.num_states = int(data_lines[1])
 
-    # Line 2: Initial States (Format: "count state1 state2...")
     init_parts = data_lines[2].split()
     if len(init_parts) > 1:
         auto.initial_states = list(map(int, init_parts[1:]))
 
-    # Line 3: Final States (Format: "count state1 state2...")
     final_parts = data_lines[3].split()
     if len(final_parts) > 1:
         auto.final_states = list(map(int, final_parts[1:]))
 
-    # 4. Number of Transitions
     num_transitions = int(data_lines[4])
 
-    # Line 4 and onwards: Transitions (Format: "0a1")
     for trans_line in data_lines[5:]:
-        # Regex splits: (digits)(letter)(digits)
         match = re.match(r"(\d+)([a-zA-Z])(\d+)", trans_line)
         if match:
             src = int(match.group(1))
@@ -72,81 +56,211 @@ def read_automaton():
     print(f"Successfully loaded Automaton {target_id}!")
     return auto
 
-def is_not_standard_fa(auto):
-    # Condition 1: Check for exactly one initial state
-    if len(auto.initial_states) != 1:
-        print("More or less than 1 intial state ! Not Standard.")
-        return True # Non-standard: 0 or multiple initial states 
-    
-    unique_entry = auto.initial_states[0]
-
-    # Condition 2: Check if any transition arrives at that unique entry point
-    # We iterate through all states and all symbols in the transitions dictionary
-    for state in auto.transitions:
-        for symbol in auto.transitions[state]:
-            destinations = auto.transitions[state][symbol]
-            # If the unique_entry is found in any set of destination states, it's non-standard
-            if unique_entry in destinations:
-                print("1 initial state, but destination to 1 or more transitions ! Not Standard.")
-                return True # Non-standard: transition arrives at the unique entry 
-
-    # If both conditions are met, it is a standard automaton
-    return False
-
-def standardize_automaton(auto):
-    # 1. Define the ID for the new unique initial state i
-    # We use the current number of states as the new index
-    new_initial_state = auto.num_states
-    
-    # 2. Check if the new state i should be terminal (final)
-    # i is terminal if any original initial state was terminal
-    is_terminal = False
-    for state in auto.initial_states:
-        if state in auto.final_states:
-            is_terminal = True
-    
-    # 3. Create new transitions departing from i
-    # For each transition going out of the original initial state(s)
-    for init_state in auto.initial_states:
-        if init_state in auto.transitions:
-            for symbol, destinations in auto.transitions[init_state].items():
-                for dest in destinations:
-                    # Create transition from i with same label and target
-                    auto.add_transition(new_initial_state, symbol, dest)
-    
-    # 4. Update the automaton structure
-    # Update total count of states
-    auto.num_states += 1
-    
-    # Set the new state as the unique entry point
-    auto.initial_states = [new_initial_state]
-    
-    # If the condition was met, add the new state to final states
-    if is_terminal:
-        auto.final_states.append(new_initial_state)
-    
-    print(f"Standardized: Added new unique initial state {new_initial_state}.")
-
 def display_automaton(auto):
+    """Prints the properties and transition table of the automaton for user inspection."""
     print(f"Alphabet size : {auto.alphabet_size}")
     print(f"Alphabet : {auto.alphabet}")
     print(f"Number of states : {auto.num_states}")
     print(f"Initial states : {auto.initial_states}")
     print(f"Final States : {auto.final_states}")
-    print(f"Transitions : {auto.transitions}")
     for state in auto.transitions:
         for symbol, target_state in auto.transitions[state].items():
             for target in target_state:
-                print(f"{state} -{symbol}-> {target}")
-    print(f"Is this a standard FA? : {'No' if is_not_standard_fa(auto) else 'Yes'}") 
+                print(f"{state} -{symbol}-> {target}") 
 
+def is_not_standard_fa(auto):
+    """Checks if the FA is non-standard by looking for multiple entries or transitions pointing to the entry."""
+    if len(auto.initial_states) != 1:
+        return True 
+    
+    unique_entry = auto.initial_states[0]
+
+    for state in auto.transitions:
+        for symbol in auto.transitions[state]:
+            destinations = auto.transitions[state][symbol]
+            if unique_entry in destinations:
+                return True 
+
+    return False
+
+def standardize_automaton(auto):
+    """Converts a non-standard FA into a standard one by adding a new unique initial state."""
+    new_initial_state = auto.num_states
+    is_terminal = False
+    for state in auto.initial_states:
+        if state in auto.final_states:
+            is_terminal = True
+    
+    for init_state in auto.initial_states:
+        if init_state in auto.transitions:
+            for symbol, destinations in auto.transitions[init_state].items():
+                for dest in destinations:
+                    auto.add_transition(new_initial_state, symbol, dest)
+    
+    auto.num_states += 1
+    auto.initial_states = [new_initial_state]
+    
+    if is_terminal:
+        auto.final_states.append(new_initial_state)
+    
+    print(f"Standardized: Added new unique initial state {new_initial_state}.")
+
+def is_synchrone(auto):
+    """Determines if the automaton is synchronous by checking for the absence of epsilon transitions."""
+    for state in auto.transitions:
+        if 'ε' in auto.transitions[state] or '' in auto.transitions[state]:
+            return False 
+            
+    return True 
+
+def is_deterministic(auto):
+    """Checks if the FA is deterministic by verifying a single entry point and unique transitions per symbol."""
+    rule1 = True
+    rule2 = True
+    if len(auto.initial_states) > 1:
+        rule1=False
+    
+    for state in auto.transitions:
+        for symbol in auto.transitions[state]:
+            destinations = auto.transitions[state][symbol]
+            if len(destinations) > 1:
+                rule2=False
+    
+    if rule1 and rule2:
+        return True
+                
+    if not rule1:
+        print("Multiple entries ! ")
+    if not rule2:
+        print("Multiple arrows for the same label coming out of the same state !")
+    print("Non deterministic !")
+    return False
+
+def is_not_complete(auto):
+    """Checks if any state in the FA lacks a transition for any symbol in the alphabet."""
+    for state_id in range(auto.num_states):
+        if state_id not in auto.transitions:
+            print(f"{state_id} doesn't have any transitions ! Not complete !")
+            return True 
+        
+        symbols_defined = auto.transitions[state_id].keys()
+        for char in auto.alphabet:
+            if char not in symbols_defined:
+                print(f"{char} doesn't point into any destination of {state_id}")
+                return True 
+                
+    return False
+
+def completion(auto):
+    """Makes a deterministic FA complete by adding a sink state for all missing transitions."""
+    sink_state = auto.num_states
+    sink_needed = False
+    
+    for state_id in range(auto.num_states):
+        if state_id not in auto.transitions:
+            auto.transitions[state_id] = {}
+            
+        for symbol in auto.alphabet:
+            if symbol not in auto.transitions[state_id]:
+                auto.add_transition(state_id, symbol, sink_state)
+                sink_needed = True
+                
+    if sink_needed:
+        for symbol in auto.alphabet:
+            auto.add_transition(sink_state, symbol, sink_state)
+        
+        auto.num_states += 1
+        print(f"Completion: Added Sink State (State {sink_state}) to make the FA total.")
+        
+    return auto
+
+def determinization_and_completion_of_automaton(auto):
+    """Transforms an NFA into a Complete Deterministic Finite Automaton using the subset construction method."""
+    start_set = tuple(sorted(set(auto.initial_states)))
+    all_sets = [start_set]
+    discovered_sets = {start_set: 0}
+    
+    cdfa = Automaton()
+    cdfa.alphabet = auto.alphabet
+    cdfa.alphabet_size = auto.alphabet_size
+    cdfa.initial_states = [0]
+    
+    i = 0
+    while i < len(all_sets):
+        current_set = all_sets[i]
+        current_id = i
+        
+        if any(s in auto.final_states for s in current_set):
+            if current_id not in cdfa.final_states:
+                cdfa.final_states.append(current_id)
+
+        for symbol in auto.alphabet:
+            next_set_builder = set()
+            for state in current_set:
+                if state in auto.transitions and symbol in auto.transitions[state]:
+                    next_set_builder.update(auto.transitions[state][symbol])
+            
+            next_set = tuple(sorted(next_set_builder))
+
+            if next_set not in discovered_sets:
+                discovered_sets[next_set] = len(all_sets)
+                all_sets.append(next_set)
+            
+            target_id = discovered_sets[next_set]
+            cdfa.add_transition(current_id, symbol, target_id)
+            
+        i += 1
+
+    cdfa.num_states = len(all_sets)
+    return cdfa
+
+def display_complete_deterministic_automaton(cdfa):
+    """Displays the CDFA using the state IDs as the composition representation."""
+    print("\n--- Complete Deterministic Automaton (CDFA) ---")
+    
+    # We iterate through the states found in the transitions
+    for state_id in sorted(cdfa.transitions.keys()):
+        # Handle the Puits (999) display
+        label = "Puits" if state_id == 999 else str(state_id)
+        
+        is_init = "-> " if state_id in cdfa.initial_states else "   "
+        is_final = " (Final)" if state_id in cdfa.final_states else ""
+        
+        print(f"{is_init}State {label}{is_final}")
+        
+        for symbol in sorted(cdfa.transitions[state_id].keys()):
+            # Get the destination (it's a set, so we pop the single value)
+            dest_id = list(cdfa.transitions[state_id][symbol])[0]
+            dest_label = "Puits" if dest_id == 999 else str(dest_id)
+            
+            print(f"      |-- {symbol} --> {dest_label}")
+    print("-" * 45)
 
 fa = read_automaton()
 display_automaton(fa)
 time.sleep(0.5)
+
 if is_not_standard_fa(fa):
     rep = input("This automaton is not a standard FA. Do you want to convert it to a standard FA? (y/n) : ").strip().lower()
     if rep == 'y':
         standardize_automaton(fa)
         time.sleep(0.25)
         display_automaton(fa)
+
+if is_synchrone(fa):
+    if is_deterministic(fa):
+        if is_not_complete(fa):
+            rep = input("Do you want to complete this deterministic FA? (y/n) : ").strip().lower()
+            if rep == 'y':
+                completion(fa)
+        else :
+            time.sleep(0.5)
+            print("This automaton is complete and deterministic !")
+            display_complete_deterministic_automaton(fa)
+    else:
+        rep = input("Do you want to determinize and complete this FA? (y/n) : ").strip().lower()
+        if rep == 'y':
+            fa = determinization_and_completion_of_automaton(fa)
+            display_complete_deterministic_automaton(fa)
+else:
+    print("This automaton is not synchrone")
