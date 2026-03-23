@@ -1,6 +1,7 @@
 from Classes import *
 
 import re
+import string
 
 
 def read_automaton():
@@ -38,7 +39,7 @@ def read_automaton():
     # Line 0: Alphabet Size
     auto.alphabet_size = int(data_lines[0])
     # Generate alphabet letters (a, b, c...) based on size
-    import string
+    
     auto.alphabet = list(string.ascii_lowercase[:auto.alphabet_size])
 
     # Line 1: Number of States
@@ -81,7 +82,7 @@ def is_not_standard_fa(auto):
             if len(auto.transitions[state][symbol]) != 1:
                 return True
 
-    # We look for any symbol that isn't in our formal alphabet (usually represented as 'ε', '#', or '')
+    # We look for any symbol that isn't in our formal alphabet (represented here as 'ε', or '')
     for state in auto.transitions:
         for symbol in auto.transitions[state]:
             if symbol not in auto.alphabet:
@@ -103,7 +104,92 @@ def is_not_standard_fa(auto):
     return False
 
 def standardize_automaton(auto):
-    pass
+    # 1. Get Epsilon Closure
+    # This finds all states reachable via 'ε' without consuming input
+    def get_epsilon_closure(states):
+        closure = set(states)
+        stack = list(states)
+        while stack:
+            s = stack.pop()
+            # Check for the specific epsilon character used in your file
+            if s in auto.transitions and 'ε' in auto.transitions[s]:
+                for next_state in auto.transitions[s]['ε']:
+                    if next_state not in closure:
+                        closure.add(next_state)
+                        stack.append(next_state)
+        return frozenset(closure)
+
+    # 2. Setup for the new DFA
+    new_transitions = {}
+    # The DFA start state is the epsilon closure of all original initial states
+    start_node = get_epsilon_closure(auto.initial_states)
+    
+    # Maps a "set of NFA states" to a single new DFA state ID
+    dfa_state_map = {start_node: 0}
+    unprocessed_nodes = [start_node]
+    
+    new_final_states = []
+    current_dfa_id = 0
+
+    # 3. Process composite states until no new ones are found
+    while unprocessed_nodes:
+        current_set = unprocessed_nodes.pop(0)
+        current_id = dfa_state_map[current_set]
+        
+        # Determine if this new state is a Final State
+        if any(state in auto.final_states for state in current_set):
+            if current_id not in new_final_states:
+                new_final_states.append(current_id)
+
+        # 4. For every character in the defined alphabet
+        for char in auto.alphabet:
+            next_set_raw = set()
+            for nfa_state in current_set:
+                if nfa_state in auto.transitions and char in auto.transitions[nfa_state]:
+                    next_set_raw.update(auto.transitions[nfa_state][char])
+            
+            # Apply epsilon closure to the destinations
+            next_set = get_epsilon_closure(next_set_raw)
+            
+            # If the transition leads nowhere, it will be handled by the Sink State later
+            if not next_set:
+                continue
+                
+            if next_set not in dfa_state_map:
+                current_dfa_id += 1
+                dfa_state_map[next_set] = current_dfa_id
+                unprocessed_nodes.append(next_set)
+            
+            # Record the new deterministic transition
+            target_id = dfa_state_map[next_set]
+            if current_id not in new_transitions:
+                new_transitions[current_id] = {}
+            new_transitions[current_id][char] = {target_id}
+
+    # 5. Update the Automaton object with new DFA data
+    auto.initial_states = [0]
+    auto.final_states = sorted(new_final_states)
+    auto.transitions = new_transitions
+    auto.num_states = len(dfa_state_map)
+
+    # 6. Final Step: Add a Sink State for Alphabet Coverage
+    # A standard DFA must have a transition for EVERY alphabet char in EVERY state
+    sink_state_id = auto.num_states
+    sink_needed = False
+    
+    for state_id in range(auto.num_states):
+        # Use .get() to avoid errors if a state has no transitions yet
+        symbols_defined = auto.transitions.get(state_id, {}).keys()
+        for char in auto.alphabet:
+            if char not in symbols_defined:
+                sink_needed = True
+                auto.add_transition(state_id, char, sink_state_id)
+                
+    if sink_needed:
+        for char in auto.alphabet:
+            auto.add_transition(sink_state_id, char, sink_state_id)
+        auto.num_states += 1
+
 
 def display_automaton(auto):
     print(f"Alphabet size : {auto.alphabet_size}")
