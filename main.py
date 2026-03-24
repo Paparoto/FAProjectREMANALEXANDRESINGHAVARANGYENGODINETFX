@@ -4,31 +4,30 @@ import string
 import time
 
 def read_automaton():
-    """Reads automaton data from a file based on user ID selection and maps it to the class."""
-    choice = input("Which FA do you want to use? from (01 to 44) : ").strip()
+    """
+    Reads automaton data from a file, extracting the alphabet and 
+    capturing any non-alphabet symbols (like ε) as transitions.
+    """
+    choice = input("Which FA do you want to use? (01 to 44) : ").strip()
     target_id = f"#{choice}"
-
     auto = Automaton()
     found = False
     data_lines = []
 
-    with open("Automatas.txt", "r") as file:
+    with open("Automatas.txt", "r", encoding="utf-8") as file:
         for line in file:
             line = line.strip()
             if not line: continue 
-
             if line == target_id:
                 found = True
                 continue
-
             if found and line.startswith("#"):
                 break
-
             if found:
                 data_lines.append(line)
 
     if not found:
-        print(f"Error: Automaton {target_id} not found in file.")
+        print(f"Error: Automaton {target_id} not found.")
         return None
 
     auto.alphabet_size = int(data_lines[0])
@@ -43,14 +42,19 @@ def read_automaton():
     if len(final_parts) > 1:
         auto.final_states = list(map(int, final_parts[1:]))
 
-    num_transitions = int(data_lines[4])
-
     for trans_line in data_lines[5:]:
-        match = re.match(r"(\d+)([a-zA-Z])(\d+)", trans_line)
-        if match:
-            src = int(match.group(1))
-            symbol = match.group(2)
-            dest = int(match.group(3))
+        digits = re.findall(r'\d+', trans_line)
+        if len(digits) >= 2:
+            src = int(digits[0])
+            dest = int(digits[-1])
+            
+            first_num_end = trans_line.find(digits[0]) + len(digits[0])
+            last_num_start = trans_line.rfind(digits[-1])
+            symbol = trans_line[first_num_end:last_num_start].strip()
+            
+            if not symbol or symbol in ['ε', 'eps', 'E', 'e']:
+                symbol = 'ε'
+                
             auto.add_transition(src, symbol, dest)
 
     print(f"Successfully loaded Automaton {target_id}!")
@@ -120,12 +124,11 @@ def standardize_automaton(auto):
     print(f"Standardized: Added new unique initial state {new_initial_state}.")
 
 def is_synchrone(auto):
-    """Determines if the automaton is synchronous by checking for the absence of epsilon transitions."""
-    for state in auto.transitions:
-        if 'ε' in auto.transitions[state] or '' in auto.transitions[state]:
-            return False 
-            
-    return True 
+    for src, transitions_for_state in auto.transitions.items():
+        for symbol in transitions_for_state:
+            if symbol not in auto.alphabet:
+                return False
+    return True
 
 def is_deterministic(auto):
     """Checks if the FA is deterministic by verifying a single entry point and unique transitions per symbol."""
@@ -371,14 +374,28 @@ def display_minimal_automaton(mcdfa):
             print(f"{str(m_id).ljust(15)} | {label_str}")
     input("\nPress Enter to continue...")
 
+def recognize_word(fa, word):
+    """
+    Verifies if the automaton recognizes the input word by traversing 
+    states based on the alphabet symbols provided in the string.
+    Returns True (Yes) if the final state is an accepting state, False otherwise.
+    """
+    if not fa.initial_states:
+        return False
+        
+    current_state = list(fa.initial_states)[0]
 
+    for symbol in word:
+        if symbol not in fa.alphabet:
+            return False
+        
+        transitions = fa.transitions.get(current_state, {}).get(symbol, set())
+        if not transitions:
+            return False
+        
+        current_state = list(transitions)[0]
 
-
-
-
-
-
-
+    return current_state in fa.final_states
 
 
 
@@ -480,7 +497,22 @@ if is_synchrone(fa):
                 print()
                 time.sleep(0.5)
                 display_minimal_automaton(fa)
+    
+    print()
+    print()
+    print("\n--- Word Recognition Test ---")
+    print("Type 'end' to stop testing words.")
+
+    while True:
+        word = input("\nEnter a word to test: ").strip()
+        
+        if word.lower() == "end":
+            break
+            
+        if recognize_word(fa, word):
+            print(f"The word '{word}' is RECOGNIZED by the automaton.")
+        else:
+            print(f"The word '{word}' is NOT RECOGNIZED by the automaton.")
             
 else:
-    print("This automaton is not synchrone")
-
+    print("This automaton is not synchronous")
