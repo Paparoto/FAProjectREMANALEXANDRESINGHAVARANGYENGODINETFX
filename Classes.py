@@ -6,7 +6,8 @@ class Automaton:
         self.initial_states = []
         self.final_states = []
         self.transitions = {} # Format: { state: { symbol: {target_states} } }
-
+        self.state_labels = {} # For CDFA: { state_id: (original_state_tuple) }
+    
     def add_transition(self, src, symbol, dest):
         if src not in self.transitions:
             self.transitions[src] = {}

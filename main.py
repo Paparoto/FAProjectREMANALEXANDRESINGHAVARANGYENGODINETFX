@@ -184,6 +184,7 @@ def determinization_and_completion_of_automaton(auto):
     cdfa.alphabet = auto.alphabet
     cdfa.alphabet_size = auto.alphabet_size
     cdfa.initial_states = [0]
+    cdfa.state_labels = {0: start_set} 
     
     i = 0
     while i < len(all_sets):
@@ -203,29 +204,45 @@ def determinization_and_completion_of_automaton(auto):
             next_set = tuple(sorted(next_set_builder))
 
             if next_set not in discovered_sets:
-                discovered_sets[next_set] = len(all_sets)
+                new_id = len(all_sets)
+                discovered_sets[next_set] = new_id
                 all_sets.append(next_set)
+                cdfa.state_labels[new_id] = next_set
             
             target_id = discovered_sets[next_set]
             cdfa.add_transition(current_id, symbol, target_id)
-            
         i += 1
 
     cdfa.num_states = len(all_sets)
     return cdfa
 
 def display_complete_deterministic_automaton(auto):
-    """Displays the CDFA and explicitly shows state composition using the required format."""
-    print(f"Alphabet size : {auto.alphabet_size}")
+    """Displays the CDFA and maps numeric indices back to their merged state names."""
+    def get_label(idx):
+        if hasattr(auto, 'state_labels') and isinstance(auto.state_labels, dict):
+            subset = auto.state_labels.get(idx, (idx,))
+            if not subset:
+                return "Puits"
+            return ".".join(map(str, subset))
+        return str(idx)
+
+    print(f"\nAlphabet size : {auto.alphabet_size}")
     print(f"Alphabet : {auto.alphabet}")
     print(f"Number of states : {auto.num_states}")
-    print(f"Initial state : {auto.initial_states}")
-    print(f"Final States : {auto.final_states}")
-    for state in auto.transitions:
-        for symbol, target_state in auto.transitions[state].items():
-            for target in target_state:
-                # 'state' and 'target' will be strings like "1.2" or "Puits"
-                print(f"{state} -{symbol}-> {target}")
+    
+    init_labels = [get_label(s) for s in auto.initial_states]
+    final_labels = [get_label(s) for s in auto.final_states]
+    
+    print(f"Initial state : {init_labels}")
+    print(f"Final States : {final_labels}")
+    
+    for state_idx in sorted(auto.transitions.keys()):
+        src_name = get_label(state_idx)
+        for symbol in auto.alphabet:
+            if symbol in auto.transitions[state_idx]:
+                dest_idx = list(auto.transitions[state_idx][symbol])[0]
+                dest_name = get_label(dest_idx)
+                print(f"{src_name} -{symbol}-> {dest_name}")
 
 fa = read_automaton()
 display_automaton(fa)
