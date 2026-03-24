@@ -56,17 +56,31 @@ def read_automaton():
     print(f"Successfully loaded Automaton {target_id}!")
     return auto
 
-def display_automaton(auto):
-    """Prints the properties and transition table of the automaton for user inspection."""
-    print(f"Alphabet size : {auto.alphabet_size}")
-    print(f"Alphabet : {auto.alphabet}")
-    print(f"Number of states : {auto.num_states}")
-    print(f"Initial states : {auto.initial_states}")
-    print(f"Final States : {auto.final_states}")
-    for state in auto.transitions:
-        for symbol, target_state in auto.transitions[state].items():
-            for target in target_state:
-                print(f"{state} -{symbol}-> {target}") 
+def display_automaton(fa):
+    print("\n--- Finite Automaton ---")
+    
+    # Define columns: State, Initial, Final, and one for each alphabet symbol
+    headers = ["State", "Init", "Final"] + [str(s) for s in fa.alphabet]
+    col_width = 10 # Standard width for initial FA
+    
+    header_line = "".join(h.ljust(col_width) for h in headers)
+    print(header_line)
+    print("-" * len(header_line))
+
+    for state in range(fa.num_states):
+        row = []
+        row.append(str(state).ljust(col_width))
+        row.append("Yes".ljust(col_width) if state in fa.initial_states else " ".ljust(col_width))
+        row.append("Yes".ljust(col_width) if state in fa.final_states else " ".ljust(col_width))
+        
+        for symbol in fa.alphabet:
+            # Transitions are sets in your class: {target_states}
+            targets = fa.transitions.get(state, {}).get(symbol, set())
+            target_str = ",".join(map(str, sorted(list(targets)))) if targets else "-"
+            row.append(target_str.ljust(col_width))
+        
+        print("".join(row))
+    input("\nPress Enter to continue...")
 
 def is_not_standard_fa(auto):
     """Checks if the FA is non-standard by looking for multiple entries or transitions pointing to the entry."""
@@ -216,33 +230,200 @@ def determinization_and_completion_of_automaton(auto):
     cdfa.num_states = len(all_sets)
     return cdfa
 
-def display_complete_deterministic_automaton(auto):
-    """Displays the CDFA and maps numeric indices back to their merged state names."""
-    def get_label(idx):
-        if hasattr(auto, 'state_labels') and isinstance(auto.state_labels, dict):
-            subset = auto.state_labels.get(idx, (idx,))
-            if not subset:
-                return "Puits"
-            return ".".join(map(str, subset))
-        return str(idx)
+def display_complete_deterministic_automaton(cdfa):
+    print("\n--- Complete Deterministic Finite Automaton (CDFA) ---")
+    headers = ["State", "Init", "Final"] + [str(s) for s in cdfa.alphabet]
+    
+    max_label_len = 0
+    if cdfa.state_labels:
+        max_label_len = max(len(str(v)) for v in cdfa.state_labels.values())
+    col_width = max(max_label_len + 2, 10)
+    
+    header_line = "".join(h.ljust(col_width) for h in headers)
+    print(header_line)
+    print("-" * len(header_line))
 
-    print(f"\nAlphabet size : {auto.alphabet_size}")
-    print(f"Alphabet : {auto.alphabet}")
-    print(f"Number of states : {auto.num_states}")
+    for state in range(cdfa.num_states):
+        row = []
+        row.append(str(state).ljust(col_width))
+        row.append("Yes".ljust(col_width) if state in cdfa.initial_states else " ".ljust(col_width))
+        row.append("Yes".ljust(col_width) if state in cdfa.final_states else " ".ljust(col_width))
+        
+        for symbol in cdfa.alphabet:
+            target = cdfa.transitions.get(state, {}).get(symbol, set())
+            target_str = str(list(target)[0]) if target else "Sink" 
+            row.append(target_str.ljust(col_width))
+        print("".join(row))
+
+    if cdfa.state_labels:
+        print("\nState Composition (CDFA ID -> Original States):")
+        print(f"{'CDFA ID'.ljust(12)} | {'Original Set'.ljust(20)}")
+        print("-" * 35)
+        for cdfa_id, composition in sorted(cdfa.state_labels.items()):
+            comp_str = "{" + ",".join(map(str, composition)) + "}"
+            print(f"{str(cdfa_id).ljust(12)} | {comp_str}")
+    input("\nPress Enter to continue...")
+
+def minimization(auto):
+    """
+    Performs Moore's algorithm to produce a truly minimal MCDFA.
+    It splits states into groups until only those with identical 
+    transition behaviors remain together.
+    """
+    # 1. Initial Split: Non-Final (Group 0) vs Final (Group 1)
+    non_final = tuple(sorted(s for s in range(auto.num_states) if s not in auto.final_states))
+    final = tuple(sorted(auto.final_states))
     
-    init_labels = [get_label(s) for s in auto.initial_states]
-    final_labels = [get_label(s) for s in auto.final_states]
+    partition = []
+    if non_final: partition.append(non_final)
+    if final: partition.append(final)
+
+    def get_group_id(state, current_partition):
+        for i, group in enumerate(current_partition):
+            if state in group: return i
+        return -1
+
+    iteration = 0
+    while True:
+        print(f"P{iteration}: {partition}")
+        new_partition = []
+        
+        for group in partition:
+            if len(group) <= 1:
+                new_partition.append(group)
+                continue
+            
+            # Refine by transition signature
+            signatures = {}
+            for state in group:
+                # signature = (dest_group_on_a, dest_group_on_b, ...)
+                sig = tuple(get_group_id(list(auto.transitions[state][char])[0], partition) 
+                            for char in auto.alphabet)
+                if sig not in signatures:
+                    signatures[sig] = []
+                signatures[sig].append(state)
+            
+            for sub_group in signatures.values():
+                new_partition.append(tuple(sorted(sub_group)))
+
+        new_partition.sort()
+        if new_partition == partition:
+            break
+        partition = new_partition
+        iteration += 1
+
+    # 2. Reconstruct the MCDFA
+    mcdfa = Automaton()
+    mcdfa.alphabet = auto.alphabet
+    mcdfa.alphabet_size = auto.alphabet_size
+    mcdfa.num_states = len(partition)
+    mcdfa.state_labels = {}
     
-    print(f"Initial state : {init_labels}")
-    print(f"Final States : {final_labels}")
+    state_to_group = {}
+    for i, group in enumerate(partition):
+        combined_label = []
+        for s in group:
+            state_to_group[s] = i
+            combined_label.extend(auto.state_labels.get(s, (s,)))
+        mcdfa.state_labels[i] = tuple(sorted(set(combined_label)))
+
+    mcdfa.initial_states = list(set(state_to_group[s] for s in auto.initial_states))
+    mcdfa.final_states = list(set(state_to_group[s] for s in auto.final_states))
+
+    for i, group in enumerate(partition):
+        rep = group[0]
+        for char in auto.alphabet:
+            target = list(auto.transitions[rep][char])[0]
+            mcdfa.add_transition(i, char, state_to_group[target])
+
+    return mcdfa
+
+def display_minimal_automaton(mcdfa):
+    print("\n--- Minimal Deterministic Complete Finite Automaton ---")
     
-    for state_idx in sorted(auto.transitions.keys()):
-        src_name = get_label(state_idx)
-        for symbol in auto.alphabet:
-            if symbol in auto.transitions[state_idx]:
-                dest_idx = list(auto.transitions[state_idx][symbol])[0]
-                dest_name = get_label(dest_idx)
-                print(f"{src_name} -{symbol}-> {dest_name}")
+    headers = ["State", "Initial", "Final"] + [str(s) for s in mcdfa.alphabet]
+    col_width = max(len(str(x)) for x in mcdfa.state_labels.values()) if mcdfa.state_labels else 10
+    col_width = max(col_width, 8)
+    
+    header_line = "".join(h.ljust(col_width) for h in headers)
+    print(header_line)
+    print("-" * len(header_line))
+
+    for state in range(mcdfa.num_states):
+        row = []
+        row.append(str(state).ljust(col_width))
+        row.append("Yes".ljust(col_width) if state in mcdfa.initial_states else " ".ljust(col_width))
+        row.append("Yes".ljust(col_width) if state in mcdfa.final_states else " ".ljust(col_width))
+        
+        for symbol in mcdfa.alphabet:
+            target = mcdfa.transitions.get(state, {}).get(symbol, set())
+            target_str = ",".join(map(str, target)) if target else "-"
+            row.append(target_str.ljust(col_width))
+        
+        print("".join(row))
+
+    if mcdfa.state_labels:
+        print("\nState Correspondences (Minimal State -> CDFA States):")
+        print(f"{'Minimal ID'.ljust(15)} | {'CDFA States'.ljust(20)}")
+        print("-" * 40)
+        for m_id, original_labels in sorted(mcdfa.state_labels.items()):
+            label_str = str(original_labels)
+            print(f"{str(m_id).ljust(15)} | {label_str}")
+    input("\nPress Enter to continue...")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 fa = read_automaton()
 display_automaton(fa)
@@ -255,20 +436,51 @@ if is_not_standard_fa(fa):
         time.sleep(0.25)
         display_automaton(fa)
 
+else:
+     print("This automaton is a standard FA !")
+
+print()
+print()
+print()
+
 if is_synchrone(fa):
     if is_deterministic(fa):
         if is_not_complete(fa):
             rep = input("Do you want to complete this deterministic FA? (y/n) : ").strip().lower()
             if rep == 'y':
                 completion(fa)
+                display_complete_deterministic_automaton(fa)
+                time.sleep(0.5)
+                rep = input("Do you want to minimize if possible this CDFA? (y/n) : ").strip().lower()
+                if rep == 'y':
+                    fa = minimization(fa)
+                    print()
+                    time.sleep(0.5)
+                    display_minimal_automaton(fa)
         else :
             time.sleep(0.5)
             print("This automaton is complete and deterministic !")
             display_complete_deterministic_automaton(fa)
+            time.sleep(0.5)
+            rep = input("Do you want to minimize if possible this CDFA? (y/n) : ").strip().lower()
+            if rep == 'y':
+                fa = minimization(fa)
+                print()
+                time.sleep(0.5)
+                display_minimal_automaton(fa)
     else:
         rep = input("Do you want to determinize and complete this FA? (y/n) : ").strip().lower()
         if rep == 'y':
             fa = determinization_and_completion_of_automaton(fa)
             display_complete_deterministic_automaton(fa)
+            time.sleep(0.5)
+            rep = input("Do you want to minimize if possible this CDFA? (y/n) : ").strip().lower()
+            if rep == 'y':
+                fa = minimization(fa)
+                print()
+                time.sleep(0.5)
+                display_minimal_automaton(fa)
+            
 else:
     print("This automaton is not synchrone")
+
