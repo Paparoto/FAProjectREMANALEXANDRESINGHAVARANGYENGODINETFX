@@ -1,0 +1,23 @@
+Successfully loaded Automaton #33!
+
+--- Finite Automaton ---
+State     Init      Final     a         b         c         d         
+----------------------------------------------------------------------
+0         Yes                 -         -         -         -         
+1                             -         -         -         -         
+2                             3         -         -         -         
+3                             -         -         -         -         
+4                             -         4         -         -         
+5                             -         -         6         -         
+6                             -         -         -         -         
+7                             -         -         -         -         
+8                             8         -         -         -         
+9                             -         10        -         -         
+10                            -         -         -         -         
+11                            -         -         11        -         
+12                  Yes       -         -         -         -         
+
+
+Automaton is already standard.
+
+Automaton is asynchronous (contains epsilon transitions). Skipping Determinization.

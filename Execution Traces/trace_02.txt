@@ -1,0 +1,33 @@
+Successfully loaded Automaton #02!
+
+--- Finite Automaton ---
+State     Init      Final     a         
+----------------------------------------
+0         Yes       Yes       0         
+
+
+Automaton is not standard. Standardizing...
+Standardized: Added new unique initial state 1.
+
+--- Finite Automaton ---
+State     Init      Final     a         
+----------------------------------------
+0                   Yes       0         
+1         Yes       Yes       0         
+
+
+Automaton is already Deterministic and Complete.
+
+Performing Minimization...
+P0: [(0, 1)]
+
+--- Minimal Deterministic Complete Finite Automaton ---
+State   Initial Final   a       
+--------------------------------
+0       Yes     Yes     0       
+
+State Correspondences (Minimal State -> CDFA States):
+Minimal ID      | CDFA States         
+----------------------------------------
+0               | (0, 1)
+

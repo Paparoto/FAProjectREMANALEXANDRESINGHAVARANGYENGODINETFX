@@ -1,0 +1,72 @@
+Successfully loaded Automaton #22!
+
+--- Finite Automaton ---
+State     Init      Final     a         b         c         d         
+----------------------------------------------------------------------
+0                             -         -         -         1         
+1         Yes       Yes       0,2,3     -         -         -         
+2                             -         3         -         -         
+3                             -         -         0         -         
+
+
+Automaton is not standard. Standardizing...
+Standardized: Added new unique initial state 4.
+
+--- Finite Automaton ---
+State     Init      Final     a         b         c         d         
+----------------------------------------------------------------------
+0                             -         -         -         1         
+1                   Yes       0,2,3     -         -         -         
+2                             -         3         -         -         
+3                             -         -         0         -         
+4         Yes       Yes       0,2,3     -         -         -         
+
+Multiple arrows for the same label coming out of the same state !
+Non deterministic !
+
+Determinizing and Completing...
+
+--- Complete Deterministic Finite Automaton (CDFA) ---
+State      Init       Final      a          b          c          d          
+-----------------------------------------------------------------------------
+0          Yes        Yes        1          2          2          2          
+1                                2          3          4          5          
+2                                2          2          2          2          
+3                                2          2          4          2          
+4                                2          2          2          5          
+5                     Yes        1          2          2          2          
+
+State Composition (CDFA ID -> Original States):
+CDFA ID      | Original Set        
+-----------------------------------
+0            | {4}
+1            | {0,2,3}
+2            | {}
+3            | {3}
+4            | {0}
+5            | {1}
+
+
+Performing Minimization...
+P0: [(1, 2, 3, 4), (0, 5)]
+P1: [(0, 5), (1, 4), (2, 3)]
+P2: [(0, 5), (1,), (2,), (3,), (4,)]
+
+--- Minimal Deterministic Complete Finite Automaton ---
+State    Initial  Final    a        b        c        d        
+---------------------------------------------------------------
+0        Yes      Yes      1        2        2        2        
+1                          2        3        4        0        
+2                          2        2        2        2        
+3                          2        2        4        2        
+4                          2        2        2        0        
+
+State Correspondences (Minimal State -> CDFA States):
+Minimal ID      | CDFA States         
+----------------------------------------
+0               | (1, 4)
+1               | (0, 2, 3)
+2               | ()
+3               | (3,)
+4               | (0,)
+

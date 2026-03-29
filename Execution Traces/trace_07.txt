@@ -1,0 +1,52 @@
+Successfully loaded Automaton #07!
+
+--- Finite Automaton ---
+State     Init      Final     a         
+----------------------------------------
+0                   Yes       -         
+1         Yes                 0,1       
+
+
+Automaton is not standard. Standardizing...
+Standardized: Added new unique initial state 2.
+
+--- Finite Automaton ---
+State     Init      Final     a         
+----------------------------------------
+0                   Yes       -         
+1                             0,1       
+2         Yes                 0,1       
+
+Multiple arrows for the same label coming out of the same state !
+Non deterministic !
+
+Determinizing and Completing...
+
+--- Complete Deterministic Finite Automaton (CDFA) ---
+State     Init      Final     a         
+----------------------------------------
+0         Yes                 1         
+1                   Yes       1         
+
+State Composition (CDFA ID -> Original States):
+CDFA ID      | Original Set        
+-----------------------------------
+0            | {2}
+1            | {0,1}
+
+
+Performing Minimization...
+P0: [(0,), (1,)]
+
+--- Minimal Deterministic Complete Finite Automaton ---
+State   Initial Final   a       
+--------------------------------
+0       Yes             1       
+1               Yes     1       
+
+State Correspondences (Minimal State -> CDFA States):
+Minimal ID      | CDFA States         
+----------------------------------------
+0               | (2,)
+1               | (0, 1)
+

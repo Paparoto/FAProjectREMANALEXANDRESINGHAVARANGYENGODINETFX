@@ -3,12 +3,12 @@ import re
 import string
 import time
 
-def read_automaton():
+def read_automaton(choice):
     """
     Reads automaton data from a file, extracting the alphabet and 
     capturing any non-alphabet symbols (like ε) as transitions.
     """
-    choice = input("Which FA do you want to use? (01 to 44) : ").strip()
+    
     target_id = f"#{choice}"
     auto = Automaton()
     found = False
@@ -432,17 +432,8 @@ def recognize_word(fa, word):
 
 
 
-
-
-
-
-
-
-
-
-
-
-fa = read_automaton()
+choice = input("Which FA do you want to use? (01 to 44) : ").strip()
+fa = read_automaton(choice)
 display_automaton(fa)
 time.sleep(0.5)
 

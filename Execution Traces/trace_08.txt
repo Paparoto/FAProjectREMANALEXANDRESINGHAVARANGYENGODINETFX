@@ -1,0 +1,29 @@
+Successfully loaded Automaton #08!
+
+--- Finite Automaton ---
+State     Init      Final     a         
+----------------------------------------
+0                   Yes       0         
+1         Yes                 0         
+
+
+Automaton is already standard.
+
+Automaton is already Deterministic and Complete.
+
+Performing Minimization...
+P0: [(1,), (0,)]
+P1: [(0,), (1,)]
+
+--- Minimal Deterministic Complete Finite Automaton ---
+State   Initial Final   a       
+--------------------------------
+0               Yes     0       
+1       Yes             0       
+
+State Correspondences (Minimal State -> CDFA States):
+Minimal ID      | CDFA States         
+----------------------------------------
+0               | (0,)
+1               | (1,)
+

@@ -1,0 +1,42 @@
+Successfully loaded Automaton #04!
+
+--- Finite Automaton ---
+State     Init      Final     a         
+----------------------------------------
+0         Yes                 1         
+1                             -         
+
+
+Automaton is already standard.
+1 doesn't have any transitions ! Not complete !
+
+Determinizing and Completing...
+
+--- Complete Deterministic Finite Automaton (CDFA) ---
+State     Init      Final     a         
+----------------------------------------
+0         Yes                 1         
+1                             2         
+2                             2         
+
+State Composition (CDFA ID -> Original States):
+CDFA ID      | Original Set        
+-----------------------------------
+0            | {0}
+1            | {1}
+2            | {}
+
+
+Performing Minimization...
+P0: [(0, 1, 2)]
+
+--- Minimal Deterministic Complete Finite Automaton ---
+State   Initial Final   a       
+--------------------------------
+0       Yes             0       
+
+State Correspondences (Minimal State -> CDFA States):
+Minimal ID      | CDFA States         
+----------------------------------------
+0               | (0, 1)
+

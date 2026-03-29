@@ -1,0 +1,58 @@
+Successfully loaded Automaton #12!
+
+--- Finite Automaton ---
+State     Init      Final     a         b         c         d         
+----------------------------------------------------------------------
+0                             -         0         -         1         
+1         Yes       Yes       1         -         0         -         
+
+
+Automaton is not standard. Standardizing...
+Standardized: Added new unique initial state 2.
+
+--- Finite Automaton ---
+State     Init      Final     a         b         c         d         
+----------------------------------------------------------------------
+0                             -         0         -         1         
+1                   Yes       1         -         0         -         
+2         Yes       Yes       1         -         0         -         
+
+a doesn't point into any destination of 0
+
+Determinizing and Completing...
+
+--- Complete Deterministic Finite Automaton (CDFA) ---
+State     Init      Final     a         b         c         d         
+----------------------------------------------------------------------
+0         Yes       Yes       1         2         3         2         
+1                   Yes       1         2         3         2         
+2                             2         2         2         2         
+3                             2         3         2         1         
+
+State Composition (CDFA ID -> Original States):
+CDFA ID      | Original Set        
+-----------------------------------
+0            | {2}
+1            | {1}
+2            | {}
+3            | {0}
+
+
+Performing Minimization...
+P0: [(2, 3), (0, 1)]
+P1: [(0, 1), (2,), (3,)]
+
+--- Minimal Deterministic Complete Finite Automaton ---
+State   Initial Final   a       b       c       d       
+--------------------------------------------------------
+0       Yes     Yes     0       1       2       1       
+1                       1       1       1       1       
+2                       1       2       1       0       
+
+State Correspondences (Minimal State -> CDFA States):
+Minimal ID      | CDFA States         
+----------------------------------------
+0               | (1, 2)
+1               | ()
+2               | (0,)
+

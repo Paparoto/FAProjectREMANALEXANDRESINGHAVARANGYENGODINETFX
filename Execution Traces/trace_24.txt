@@ -1,0 +1,61 @@
+Successfully loaded Automaton #24!
+
+--- Finite Automaton ---
+State     Init      Final     a         b         c         d         
+----------------------------------------------------------------------
+0                   Yes       -         -         -         0         
+1         Yes                 2         3         4         0         
+2                             2         3         4         0         
+3                             -         3         4         0         
+4                             -         -         4         0         
+
+
+Automaton is already standard.
+a doesn't point into any destination of 0
+
+Determinizing and Completing...
+
+--- Complete Deterministic Finite Automaton (CDFA) ---
+State     Init      Final     a         b         c         d         
+----------------------------------------------------------------------
+0         Yes                 1         2         3         4         
+1                             1         2         3         4         
+2                             5         2         3         4         
+3                             5         5         3         4         
+4                   Yes       5         5         5         4         
+5                             5         5         5         5         
+
+State Composition (CDFA ID -> Original States):
+CDFA ID      | Original Set        
+-----------------------------------
+0            | {1}
+1            | {2}
+2            | {3}
+3            | {4}
+4            | {0}
+5            | {}
+
+
+Performing Minimization...
+P0: [(0, 1, 2, 3, 5), (4,)]
+P1: [(0, 1, 2, 3), (4,), (5,)]
+P2: [(0, 1), (2,), (3,), (4,), (5,)]
+
+--- Minimal Deterministic Complete Finite Automaton ---
+State   Initial Final   a       b       c       d       
+--------------------------------------------------------
+0       Yes             0       1       2       3       
+1                       4       1       2       3       
+2                       4       4       2       3       
+3               Yes     4       4       4       3       
+4                       4       4       4       4       
+
+State Correspondences (Minimal State -> CDFA States):
+Minimal ID      | CDFA States         
+----------------------------------------
+0               | (1, 2)
+1               | (3,)
+2               | (4,)
+3               | (0,)
+4               | ()
+
